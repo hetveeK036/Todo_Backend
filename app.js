@@ -1,46 +1,23 @@
-const express = require('express')
-const mysql = require('mysql2');
-const cors = require('cors');
-const db = require('./db');
-const taskUpdated = require('./component/update')
-const taskDeleted = require('./component/delete')
+const express = require("express");
+const cors = require("cors");
+
+const todoRoutes = require("./routes/todoRoutes");
+const healthCheckRoute = require("./routes/healthCheck");
 
 const app = express();
 app.use(express.json());
 
 app.use(cors());
 
-// Get all Task
-app.get('/', (req, res) => {
-    db.query('SELECT * FROM todo', (err, result) => {
-        if (err) {
-            console.log('there is error in getting data :', err);
-            return res.status(500).json({message: err.message});
-        } else {
-            res.json(result);
-        }
-    })
-})
+app.all("/", function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  next();
+});
 
+// Routes
+app.use("/health-check", healthCheckRoute);
+app.use("/todos", todoRoutes);
 
-// Add a new Task
-app.post('/', (req, res) => {
-    const {name, completed} = req.body;
-    db.query('INSERT INTO todo (name, completed) VALUES (?, ? )', [name, completed], (err, result) => {
-        if (err) {
-            console.log('there is error while adding new task', err);
-            return res.status(201).json({message: message});
-        } else {
-            res.status(201).json({id: result.insertId, name, completed});
-        }
-    } )
-
-})
-// Update a task
-app.use('/update', taskUpdated);
-// Delete a task
-app.use('/delete', taskDeleted);
-
-
-const PORT = process.env.PORT || 8081;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`server running on port ${PORT}`));
